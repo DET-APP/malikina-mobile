@@ -47,17 +47,17 @@ export default function XassidasScreen() {
 
         {/* Search dans le header */}
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={17} color="rgba(255,255,255,0.7)" />
+          <Ionicons name="search" size={17} color={Colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Rechercher une xassida..."
-            placeholderTextColor="rgba(255,255,255,0.55)"
+            placeholderTextColor={Colors.textMuted}
             value={search}
             onChangeText={setSearch}
           />
           {search ? (
             <TouchableOpacity onPress={() => setSearch('')}>
-              <Ionicons name="close-circle" size={17} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="close-circle" size={17} color={Colors.textMuted} />
             </TouchableOpacity>
           ) : null}
         </View>
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
 
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12,
+    backgroundColor: Colors.surface, borderRadius: 12,
     paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10,
   },
-  searchInput: { flex: 1, fontSize: 14, color: Colors.white, padding: 0 },
+  searchInput: { flex: 1, fontSize: 14, color: Colors.text, padding: 0 },
 
   viewToggle: { flexDirection: 'row', gap: 8 },
   toggleBtn: {

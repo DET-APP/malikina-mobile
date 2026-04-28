@@ -162,7 +162,9 @@ export default function HomeScreen() {
               <Text style={styles.verseXassidaName} numberOfLines={1}>{featuredXassida.title}</Text>
             </View>
             {featuredVerse.text_arabic && (
-              <Text style={styles.verseArabic}>{featuredVerse.text_arabic}</Text>
+              <View style={styles.verseArabicBox}>
+                <Text style={styles.verseArabic}>{featuredVerse.text_arabic}</Text>
+              </View>
             )}
             {featuredVerse.transcription && (
               <Text style={styles.verseTranscription} numberOfLines={3}>{featuredVerse.transcription}</Text>
@@ -189,6 +191,12 @@ function XassidaCard({ xassida }: { xassida: Xassida }) {
         <Text style={styles.xassidaArabic} numberOfLines={1}>{xassida.arabic_name}</Text>
       )}
       <Text style={styles.xassidaTitle} numberOfLines={2}>{xassida.title}</Text>
+      {xassida.author_name && (
+        <Text style={styles.xassidaAuthor} numberOfLines={1}>{xassida.author_name}</Text>
+      )}
+      <View style={styles.xassidaReadBtn}>
+        <Text style={styles.xassidaReadText}>▶ Lire</Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -263,23 +271,34 @@ const styles = StyleSheet.create({
   },
   xassidaInitialsText: { fontSize: 16, fontWeight: '700', color: Colors.primary },
   xassidaArabic: { fontFamily: 'Amiri', fontSize: 14, color: Colors.primary, marginBottom: 4 },
-  xassidaTitle: { fontSize: 12, fontWeight: '600', color: Colors.text, lineHeight: 17 },
+  xassidaTitle: { fontSize: 12, fontWeight: '600', color: Colors.text, lineHeight: 17, flex: 1 },
+  xassidaAuthor: { fontSize: 10, color: Colors.textMuted, marginTop: 2 },
+  xassidaReadBtn: {
+    marginTop: 8, backgroundColor: Colors.primary, borderRadius: 8,
+    paddingVertical: 5, alignItems: 'center',
+  },
+  xassidaReadText: { fontSize: 11, fontWeight: '700', color: Colors.white },
 
   verseCard: {
-    marginHorizontal: 16, marginTop: 14, backgroundColor: Colors.primary, borderRadius: 18, padding: 20,
-    shadowColor: Colors.primaryDark, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22, shadowRadius: 12, elevation: 6,
+    marginHorizontal: 16, marginTop: 14, backgroundColor: Colors.surface, borderRadius: 18, padding: 16,
+    borderWidth: 1, borderColor: Colors.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
   },
-  verseTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  verseTopRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   verseBadge: {
-    backgroundColor: Colors.gold, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: Colors.primaryLight, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
   },
-  verseBadgeText: { fontSize: 11, fontWeight: '700', color: Colors.white },
-  verseXassidaName: { fontSize: 12, color: 'rgba(255,255,255,0.65)', flex: 1 },
+  verseBadgeText: { fontSize: 11, fontWeight: '700', color: Colors.primary },
+  verseXassidaName: { fontSize: 12, color: Colors.textMuted, flex: 1 },
+  verseArabicBox: {
+    backgroundColor: Colors.surfaceAlt, borderRadius: 12, padding: 14, marginBottom: 8,
+  },
   verseArabic: {
-    fontFamily: 'Amiri', fontSize: 22, color: Colors.white,
-    textAlign: 'right', lineHeight: 36, marginBottom: 10,
+    fontFamily: 'Amiri', fontSize: 22, color: Colors.primary,
+    textAlign: 'right', lineHeight: 36,
   },
-  verseTranscription: { fontSize: 13, color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', marginBottom: 6, lineHeight: 20 },
-  verseFr: { fontSize: 13, color: 'rgba(255,255,255,0.6)', lineHeight: 19 },
+  verseTranscription: { fontSize: 13, color: Colors.textSecondary, fontStyle: 'italic', lineHeight: 20 },
+  verseFr: { fontSize: 13, color: Colors.textMuted, lineHeight: 19 },
 });
