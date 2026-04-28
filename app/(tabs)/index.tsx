@@ -80,8 +80,8 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View>
-              <Text style={styles.headerGreeting}>Assalamu Alaikum</Text>
-              <Text style={styles.headerDate}>{dateLabel}</Text>
+              <Text style={styles.headerGreeting}>Bienvenue</Text>
+              <Text style={styles.headerDate}>Assalamou Alaikoum</Text>
             </View>
             <View style={styles.headerIconBtn}>
               <Ionicons name="notifications-outline" size={22} color={Colors.white} />
@@ -98,7 +98,7 @@ export default function HomeScreen() {
           <View style={styles.logoInfo}>
             <Text style={styles.logoTitle}>Al Moutahabbina Fillahi</Text>
             <Text style={styles.logoArabic}>الْمُتَحَابِّينَ فِي اللَّهِ</Text>
-            <Text style={styles.logoSub}>Dahira des Étudiants Tidianes</Text>
+            <Text style={styles.logoSub}>Dahira des Étudiants Tidianes - UAD</Text>
           </View>
         </View>
 
@@ -127,9 +127,12 @@ export default function HomeScreen() {
         {/* ── Xassidas récentes ───────────────────────────── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Xassidas</Text>
+            <View>
+              <Text style={styles.sectionTitle}>À découvrir</Text>
+              <Text style={styles.sectionSubtitle}>Xassidas populaires</Text>
+            </View>
             <TouchableOpacity onPress={() => router.push('/(tabs)/xassidas')}>
-              <Text style={styles.sectionLink}>Voir tout →</Text>
+              <Text style={styles.sectionLink}>Voir tout</Text>
             </TouchableOpacity>
           </View>
           {isLoading ? (
@@ -154,7 +157,7 @@ export default function HomeScreen() {
           >
             <View style={styles.verseTopRow}>
               <View style={styles.verseBadge}>
-                <Text style={styles.verseBadgeText}>✦ Vers du jour</Text>
+                <Text style={styles.verseBadgeText}>✦ Vers du Jour</Text>
               </View>
               <Text style={styles.verseXassidaName} numberOfLines={1}>{featuredXassida.title}</Text>
             </View>
@@ -245,6 +248,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, marginBottom: 12,
   },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: Colors.text },
+  sectionSubtitle: { fontSize: 12, color: Colors.textMuted, marginTop: 2 },
   sectionLink: { fontSize: 13, color: Colors.primary, fontWeight: '600' },
   xassidasRow: { paddingHorizontal: 16, gap: 10 },
 
