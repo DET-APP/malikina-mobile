@@ -37,7 +37,7 @@ export default function RootLayout() {
             options={{
               headerShown: true,
               headerStyle: { backgroundColor: Colors.surface },
-              headerTintColor: Colors.gold,
+              headerTintColor: Colors.primary,
               headerTitle: '',
               headerBackTitle: 'Retour',
             }}

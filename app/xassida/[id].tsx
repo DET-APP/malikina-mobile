@@ -1,12 +1,12 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, SafeAreaView, ScrollView,
+  ActivityIndicator, ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from 'react';
 import { Audio } from 'expo-av';
 import { api, Verse, XassidaAudio } from '@/services/api';
 import { Colors } from '@/constants/colors';
@@ -26,53 +26,38 @@ export default function XassidaDetailScreen() {
   const { data: audios = [] } = useQuery({ queryKey: ['audios', id], queryFn: () => api.xassidas.audios(id!) });
 
   useEffect(() => {
-    if (xassida) navigation.setOptions({ headerTitle: xassida.title });
+    if (xassida) navigation.setOptions({ headerTitle: xassida.title, headerTintColor: Colors.primary });
     return () => { sound?.unloadAsync(); };
   }, [xassida, sound]);
 
   const chapters = [...new Set(verses.map(v => v.chapter_number).filter(Boolean))].sort((a, b) => a! - b!);
+  const filteredVerses = selectedChapter ? verses.filter(v => v.chapter_number === selectedChapter) : verses;
 
-  const filteredVerses = selectedChapter
-    ? verses.filter(v => v.chapter_number === selectedChapter)
-    : verses;
-
-  const toggleLang = (lang: Lang) => {
-    setActiveLangs(prev =>
-      prev.includes(lang) ? (prev.length > 1 ? prev.filter(l => l !== lang) : prev) : [...prev, lang]
-    );
-  };
+  const toggleLang = (lang: Lang) =>
+    setActiveLangs(prev => prev.includes(lang)
+      ? prev.length > 1 ? prev.filter(l => l !== lang) : prev
+      : [...prev, lang]);
 
   const playAudio = async (audio: XassidaAudio) => {
-    if (sound) {
-      await sound.unloadAsync();
-      setSound(null);
-      setPlayingAudioId(null);
-    }
+    if (sound) { await sound.unloadAsync(); setSound(null); setPlayingAudioId(null); }
     if (playingAudioId === audio.id) return;
-
-    const url = audio.audio_url;
-    if (!url) return;
-
+    if (!audio.audio_url) return;
     try {
       await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      const { sound: newSound } = await Audio.Sound.createAsync({ uri: url }, { shouldPlay: true });
+      const { sound: newSound } = await Audio.Sound.createAsync({ uri: audio.audio_url }, { shouldPlay: true });
       setSound(newSound);
       setPlayingAudioId(audio.id);
-      newSound.setOnPlaybackStatusUpdate(status => {
-        if (status.isLoaded && status.didJustFinish) {
-          setPlayingAudioId(null);
-        }
-      });
-    } catch (e) {
-      console.error('Audio error:', e);
-    }
+      newSound.setOnPlaybackStatusUpdate(s => { if (s.isLoaded && s.didJustFinish) setPlayingAudioId(null); });
+    } catch (e) { console.error('Audio error:', e); }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       {/* Arabic title */}
       {xassida?.arabic_name && (
-        <Text style={styles.arabicTitle}>{xassida.arabic_name}</Text>
+        <View style={styles.arabicTitleWrap}>
+          <Text style={styles.arabicTitle}>{xassida.arabic_name}</Text>
+        </View>
       )}
 
       {/* Language toggles */}
@@ -95,8 +80,8 @@ export default function XassidaDetailScreen() {
         <FlatList
           horizontal
           data={[null, ...chapters]}
-          keyExtractor={(c) => String(c ?? 'all')}
-          contentContainerStyle={styles.chapterFilter}
+          keyExtractor={c => String(c ?? 'all')}
+          contentContainerStyle={styles.chapterRow}
           showsHorizontalScrollIndicator={false}
           renderItem={({ item }) => (
             <TouchableOpacity
@@ -112,13 +97,13 @@ export default function XassidaDetailScreen() {
       )}
 
       {/* Audio players */}
-      {audios.length > 0 && (
+      {audios.filter(a => a.audio_url).length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.audioRow}>
           {audios.filter(a => a.audio_url).map(audio => (
             <TouchableOpacity key={audio.id} style={styles.audioBtn} onPress={() => playAudio(audio)}>
               <Ionicons
                 name={playingAudioId === audio.id ? 'pause-circle' : 'play-circle'}
-                size={22} color={Colors.gold}
+                size={24} color={Colors.primary}
               />
               <Text style={styles.audioLabel} numberOfLines={1}>
                 {audio.reciter_name || audio.label || 'Audio'}
@@ -130,12 +115,13 @@ export default function XassidaDetailScreen() {
 
       {/* Verses */}
       {isLoading ? (
-        <ActivityIndicator color={Colors.gold} style={{ flex: 1 }} />
+        <ActivityIndicator color={Colors.primary} style={{ flex: 1 }} />
       ) : (
         <FlatList
           data={filteredVerses}
-          keyExtractor={(v) => String(v.verse_number)}
+          keyExtractor={v => String(v.verse_number)}
           contentContainerStyle={styles.verseList}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <VerseItem verse={item} langs={activeLangs} />}
         />
       )}
@@ -146,7 +132,9 @@ export default function XassidaDetailScreen() {
 function VerseItem({ verse, langs }: { verse: Verse; langs: Lang[] }) {
   return (
     <View style={styles.verseCard}>
-      <Text style={styles.verseNum}>{verse.verse_number}</Text>
+      <View style={styles.verseNumWrap}>
+        <Text style={styles.verseNum}>{verse.verse_number}</Text>
+      </View>
       {langs.includes('arabic') && verse.text_arabic && (
         <Text style={styles.verseArabic}>{verse.text_arabic}</Text>
       )}
@@ -154,10 +142,16 @@ function VerseItem({ verse, langs }: { verse: Verse; langs: Lang[] }) {
         <Text style={styles.verseTranscription}>{verse.transcription}</Text>
       )}
       {langs.includes('fr') && verse.translation_fr && (
-        <Text style={styles.verseFr}>{verse.translation_fr}</Text>
+        <View style={styles.transWrap}>
+          <Text style={styles.transLabel}>FR</Text>
+          <Text style={styles.verseFr}>{verse.translation_fr}</Text>
+        </View>
       )}
       {langs.includes('wo') && verse.translation_wo && (
-        <Text style={styles.verseWo}>{verse.translation_wo}</Text>
+        <View style={styles.transWrap}>
+          <Text style={styles.transLabel}>WO</Text>
+          <Text style={styles.verseWo}>{verse.translation_wo}</Text>
+        </View>
       )}
     </View>
   );
@@ -165,25 +159,55 @@ function VerseItem({ verse, langs }: { verse: Verse; langs: Lang[] }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background },
-  arabicTitle: { fontFamily: 'Amiri', fontSize: 26, color: Colors.gold, textAlign: 'center', padding: 12 },
-  langRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 12 },
-  langBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: Colors.border },
+
+  arabicTitleWrap: {
+    backgroundColor: Colors.surface, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  arabicTitle: { fontFamily: 'Amiri', fontSize: 24, color: Colors.primary, textAlign: 'center', paddingHorizontal: 16 },
+
+  langRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 16, backgroundColor: Colors.surface },
+  langBtn: {
+    paddingHorizontal: 18, paddingVertical: 7, borderRadius: 20,
+    borderWidth: 1.5, borderColor: Colors.border,
+  },
   langBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
-  langText: { fontSize: 13, color: Colors.textSecondary },
-  langTextActive: { color: Colors.white, fontWeight: '600' },
-  chapterFilter: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
-  chapterChip: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
-  chapterChipActive: { backgroundColor: Colors.primaryLight, borderColor: Colors.primaryLight },
-  chapterText: { fontSize: 12, color: Colors.textSecondary },
-  chapterTextActive: { color: Colors.white, fontWeight: '600' },
-  audioRow: { paddingHorizontal: 12, paddingBottom: 8, gap: 8 },
-  audioBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: Colors.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: Colors.border, maxWidth: 160 },
+  langText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
+  langTextActive: { color: Colors.white },
+
+  chapterRow: { paddingHorizontal: 12, paddingVertical: 8, gap: 8, backgroundColor: Colors.surfaceAlt },
+  chapterChip: {
+    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border,
+  },
+  chapterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chapterText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '500' },
+  chapterTextActive: { color: Colors.white, fontWeight: '700' },
+
+  audioRow: { paddingHorizontal: 12, paddingVertical: 8, gap: 8, backgroundColor: Colors.surfaceAlt },
+  audioBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: Colors.surface, borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: Colors.border, maxWidth: 170,
+  },
   audioLabel: { fontSize: 12, color: Colors.textSecondary, flex: 1 },
-  verseList: { padding: 12, gap: 8 },
-  verseCard: { backgroundColor: Colors.surface, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: Colors.border, gap: 6 },
-  verseNum: { fontSize: 11, color: Colors.textMuted, fontWeight: '700' },
+
+  verseList: { padding: 14, gap: 10, paddingBottom: 24 },
+  verseCard: {
+    backgroundColor: Colors.surface, borderRadius: 14, padding: 16,
+    borderWidth: 1, borderColor: Colors.border, gap: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
+  },
+  verseNumWrap: {
+    alignSelf: 'flex-end', backgroundColor: Colors.primaryLight,
+    borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2,
+  },
+  verseNum: { fontSize: 10, color: Colors.primary, fontWeight: '700' },
   verseArabic: { fontFamily: 'Amiri', fontSize: 22, color: Colors.text, textAlign: 'right', lineHeight: 36 },
-  verseTranscription: { fontSize: 14, color: Colors.textSecondary, fontStyle: 'italic' },
-  verseFr: { fontSize: 14, color: Colors.textSecondary },
-  verseWo: { fontSize: 14, color: Colors.text },
+  verseTranscription: { fontSize: 13, color: Colors.textSecondary, fontStyle: 'italic', lineHeight: 20 },
+  transWrap: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingTop: 4, borderTopWidth: 1, borderTopColor: Colors.border },
+  transLabel: { fontSize: 10, fontWeight: '700', color: Colors.primary, backgroundColor: Colors.primaryLight, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2, marginTop: 1 },
+  verseFr: { flex: 1, fontSize: 13, color: Colors.textSecondary, lineHeight: 20 },
+  verseWo: { flex: 1, fontSize: 13, color: Colors.text, lineHeight: 20 },
 });
